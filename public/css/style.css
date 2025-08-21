@@ -1,0 +1,195 @@
+:root{
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-600: #1e40af;
+  --accent: #06b6d4;
+  --success: #16a34a;
+  --danger: #ef4444;
+  --shadow: 0 6px 18px rgba(16,24,40,0.08);
+  --radius: 12px;
+  --glass: rgba(255,255,255,0.6);
+}
+
+/* Reset / Base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial;
+  background:linear-gradient(180deg,var(--bg),#eef2f7);
+  color:#0f172a;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Layout wrapper for chat panels */
+.chat-container{
+  height:calc(100vh - 96px);
+  background:transparent;
+  display:flex;
+  gap:20px;
+  padding:20px 10px;
+}
+
+.chat-container > .row{width:100%}
+
+/* Card base */
+.card-chat{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+/* Left column: conversations */
+.conversations-col{min-width:320px;max-width:360px}
+.conversations-header{
+  padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f6
+}
+.conversations-search{padding:12px 18px;border-bottom:1px solid #f1f5f9}
+.conversation-list{max-height:calc(100vh - 260px);overflow:auto;padding:8px}
+
+.conversation-item{
+  display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;margin-bottom:8px;transition:all .15s ease;cursor:pointer
+}
+.conversation-item:hover{background:#f8fafc;transform:translateY(-1px)}
+.conversation-item.active{background:linear-gradient(90deg,#eef2ff,#f8fbff)}
+.conversation-item img{width:52px;height:52px;border-radius:50%;object-fit:cover}
+.conversation-meta{flex:1;min-width:0}
+.conversation-meta h6{margin:0;font-size:0.98rem;font-weight:600;color:#0b1226}
+.conversation-meta p{margin:4px 0 0;color:var(--muted);font-size:0.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conversation-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.badge-unread{background:var(--primary);color:#fff;padding:4px 8px;border-radius:999px;font-size:0.78rem}
+
+/* Right column: chat area */
+.chat-col{flex:1;display:flex;flex-direction:column}
+.chat-header{padding:16px 20px;border-bottom:1px solid #eef2f6;display:flex;align-items:center;gap:12px}
+.chat-header img{width:48px;height:48px;border-radius:50%}
+.chat-header h5{margin:0;font-size:1.05rem}
+
+.messages-container{flex:1;padding:20px;overflow:auto;background:linear-gradient(180deg,#fbfdff,#f7f9fc)}
+
+/* Message blocks */
+.message{display:flex;margin-bottom:14px;align-items:flex-end}
+.message .avatar{width:36px;height:36px;border-radius:50%;overflow:hidden}
+.message .bubble{max-width:72%;padding:10px 14px;border-radius:14px;box-shadow:0 6px 14px rgba(2,6,23,0.04);font-size:0.95rem;line-height:1.4}
+
+.message-in{gap:10px}
+.message-in .bubble{background:var(--card);border-top-left-radius:4px}
+.message-out{justify-content:flex-end;gap:10px}
+.message-out .bubble{background:linear-gradient(90deg,#d1fae5,#bbf7d0);color:#064e3b;border-top-right-radius:4px}
+
+.message .meta{display:block;margin-top:6px;font-size:0.76rem;color:var(--muted)}
+
+/* incoming messages align meta to left, outgoing to right */
+.message-in .meta{text-align:left}
+.message-out .meta{text-align:right}
+
+/* Attachments */
+.attachment{margin-top:8px}
+.attachment img{max-height:220px;border-radius:8px;display:block}
+.file-attachment{display:flex;align-items:center;gap:10px;border:1px solid #eef2f6;padding:10px;border-radius:10px}
+.file-attachment i{font-size:20px;color:var(--muted)}
+.file-attachment a{color:var(--primary);font-weight:600}
+
+/* Message input area */
+.message-input{padding:14px;border-top:1px solid #eef2f6;background:var(--card);display:flex;align-items:center;gap:10px}
+.message-input .form-control{border-radius:999px;padding:12px 18px}
+.btn-attach{background:transparent;border:1px solid #e6eefb;color:var(--muted);padding:8px;border-radius:10px}
+
+/* Members / group sidebar */
+.group-info{padding:16px;border-bottom:1px solid #f1f5f9}
+.members-list .member{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+
+/* Utilities */
+.text-muted-small{color:var(--muted);font-size:0.85rem}
+
+/* Responsive */
+@media (max-width: 992px){
+  .conversations-col{display:none}
+  .chat-container{padding:12px}
+  .messages-container{padding:12px}
+}
+
+/* Mobile overlay and slide-in panel */
+.mobile-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.35);z-index:1200}
+.conversations-col.open{display:block;position:fixed;left:0;top:64px;bottom:0;width:85%;max-width:360px;z-index:1300;padding:12px;background:var(--card);box-shadow:var(--shadow);overflow:auto;border-right:1px solid #eef2f6}
+
+@media (max-width: 520px){
+  .message .bubble{max-width:86%}
+  .chat-header h5{font-size:0.95rem}
+}
+
+/* Floating conversations button */
+.conv-floating{position:fixed;left:14px;bottom:18px;z-index:1400;width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+.conv-floating i{font-size:18px}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#dbeafe,#bfdbfe);border-radius:999px}
+
+/* Small niceties */
+.btn-primary{background:var(--primary);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-600);border-color:var(--primary-600)}
+
+/* Modern improvements */
+:root{--soft-shadow: 0 10px 30px rgba(16,24,40,0.06);--glass-border: rgba(255,255,255,0.5)}
+
+/* Smooth transitions */
+*{transition:background-color .18s ease, color .18s ease, transform .18s ease}
+
+/* Typography */
+body{font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;letter-spacing:0.1px}
+
+/* App background */
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(180deg,rgba(37,99,235,0.03),rgba(6,182,212,0.01));z-index:-1}
+
+/* Refined cards */
+.card-chat{border-radius:calc(var(--radius) + 4px);box-shadow:var(--soft-shadow);border:1px solid rgba(15,23,42,0.04)}
+
+/* Header */
+.conversations-header h4{font-weight:700;color:#0b1226}
+.conversations-header .btn{padding:8px 12px;border-radius:10px}
+
+/* Inputs */
+.conversations-search input,.message-input .form-control{border:1px solid rgba(15,23,42,0.06);background:linear-gradient(180deg,#fff,#fbfdff);padding:12px;border-radius:999px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)}
+.conversations-search input:focus,.message-input .form-control:focus{outline:none;box-shadow:0 6px 24px rgba(37,99,235,0.08);border-color:var(--primary)}
+
+/* Conversation item modern */
+.conversation-item{background:linear-gradient(180deg,transparent,transparent);}
+.conversation-item .avatar-small{width:52px;height:52px;border-radius:50%;object-fit:cover}
+.conversation-item .meta-sub{color:var(--muted);font-size:0.85rem}
+
+/* New subtle unread badge */
+.badge-unread{background:linear-gradient(90deg,var(--primary),var(--primary-600));box-shadow:0 6px 14px rgba(37,99,235,0.12);padding:6px 10px}
+
+/* Message animations */
+@keyframes slideFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.message{animation:slideFadeIn .22s ease both}
+
+/* Outgoing bubble gradient and subtle border */
+.message-out .bubble{background:linear-gradient(90deg,#d1fae5,#bbf7d0);border:1px solid rgba(6,95,70,0.06)}
+.message-in .bubble{background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(15,23,42,0.04)}
+
+/* Timestamps and meta */
+.message .meta{opacity:.9;font-size:0.75rem}
+
+/* Attachments modern card */
+.file-attachment{background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(15,23,42,0.04)}
+
+/* Floating button polish */
+.conv-floating{box-shadow:0 10px 30px rgba(2,6,23,0.12);backdrop-filter:blur(6px)}
+
+/* Mobile tweaks */
+@media (max-width: 992px){
+  .conversations-col.open{top:56px}
+}
+
+@media (max-width:520px){
+  .conv-floating{left:10px;bottom:14px;width:44px;height:44px}
+}
+
+/* Accessibility: reduced motion */
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}

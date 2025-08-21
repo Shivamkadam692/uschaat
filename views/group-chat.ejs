@@ -1,0 +1,542 @@
+<%- include('layout', { body: '<div>\nContent here\n</div>' }) %>
+<div class="chat-container">
+  <div class="row g-0">
+    <!-- Sidebar with group info -->
+    <div class="col-md-4 col-lg-3 border-end">
+      <div class="p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Group Info</h4>
+          <a href="/groups" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+          </a>
+        </div>
+        
+        <div class="group-info mb-4">
+          <div class="text-center mb-3">
+            <img src="/img/<%= group.avatar %>" alt="<%= group.name %>" class="rounded-circle mb-2" width="80" height="80">
+            <h5><%= group.name %></h5>
+            <p class="text-muted small"><%= group.description %></p>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Members (<%= group.members.length %>)</h6>
+            <% if (group.admins.some(admin => admin._id.toString() === user._id.toString())) { %>
+              <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMembersModal">
+                <i class="fas fa-user-plus"></i>
+              </button>
+            <% } %>
+          </div>
+          
+          <div class="members-list">
+            <% group.members.forEach(member => { %>
+              <div class="d-flex align-items-center p-2 border-bottom">
+                <div class="position-relative">
+                  <img src="/img/<%= member.avatar %>" alt="<%= member.name %>" class="rounded-circle me-2" width="40" height="40">
+                  <% if (member.status === 'online') { %>
+                    <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 10px; height: 10px;"></span>
+                  <% } %>
+                </div>
+                <div class="flex-grow-1 ms-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><%= member.name %></h6>
+                    <% if (group.admins.some(admin => admin._id.toString() === member._id.toString())) { %>
+                      <span class="badge bg-primary">Admin</span>
+                    <% } %>
+                  </div>
+                  <small class="text-muted"><%= member.email %></small>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chat area -->
+    <div class="col-md-8 col-lg-9">
+      <div class="chat-area d-flex flex-column" style="height: calc(100vh - 150px);">
+        <!-- Chat header -->
+        <div class="chat-header p-3 border-bottom">
+          <div class="d-flex align-items-center">
+            <img src="/img/<%= group.avatar %>" alt="<%= group.name %>" class="rounded-circle me-2" width="40" height="40">
+            <div>
+              <h5 class="mb-0"><%= group.name %></h5>
+              <small class="text-muted"><%= group.members.length %> members</small>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Messages container -->
+        <div class="messages-container flex-grow-1 p-3 overflow-auto" id="messagesContainer">
+          <% if (messages && messages.length > 0) { %>
+            <% messages.forEach(message => { %>
+              <% const isCurrentUser = message.sender._id.toString() === user._id.toString(); %>
+              <div class="message <%= isCurrentUser ? 'message-out' : 'message-in' %> mb-2">
+                <% if (!isCurrentUser) { %>
+                  <div class="sender-info d-flex align-items-center mb-1">
+                    <img src="/img/<%= message.sender.avatar %>" alt="<%= message.sender.name %>" class="rounded-circle me-1" width="24" height="24">
+                    <small class="text-muted"><%= message.sender.name %></small>
+                  </div>
+                <% } %>
+                <div class="<%= isCurrentUser ? 'ms-auto' : 'me-auto' %> message-bubble p-2 rounded <%= isCurrentUser ? 'bg-primary text-white' : 'bg-light' %>" style="max-width: 75%;">
+                  <% if (message.attachments && message.attachments.length > 0) { %>
+                    <% message.attachments.forEach(file => { %>
+                      <div class="attachment mb-2">
+                        <% if (file.mimetype.startsWith('image/')) { %>
+                          <img src="<%= file.path %>" alt="<%= file.originalname %>" class="img-fluid rounded mb-1" style="max-height: 200px;">
+                        <% } else { %>
+                          <div class="file-attachment p-2 border rounded">
+                            <i class="fas fa-file me-2"></i>
+                            <a href="<%= file.path %>" target="_blank" class="<%= isCurrentUser ? 'text-white' : 'text-primary' %>">
+                              <%= file.originalname %>
+                            </a>
+                            <small class="<%= isCurrentUser ? 'text-white-50' : 'text-muted' %> ms-2">
+                              <%= (file.size / 1024).toFixed(1) %> KB
+                            </small>
+                          </div>
+                        <% } %>
+                      </div>
+                    <% }); %>
+                  <% } %>
+                  <% if (message.content) { %>
+                    <div class="message-text"><%= message.content %></div>
+                  <% } %>
+                  <div class="message-time text-end">
+                    <small class="<%= isCurrentUser ? 'text-white-50' : 'text-muted' %>">
+                      <%= new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="text-center py-3">
+              <p class="text-muted">No messages yet</p>
+            </div>
+          <% } %>
+        </div>
+        
+        <!-- Message input -->
+        <div class="message-input p-3 border-top">
+          <form id="messageForm">
+            <div class="d-flex">
+              <div class="input-group">
+                <input type="text" id="messageInput" class="form-control" placeholder="Type a message...">
+                <button type="button" id="attachButton" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
+                  <i class="fas fa-paperclip"></i>
+                </button>
+                <button class="btn btn-primary" type="submit">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+          <small class="text-muted d-none" id="typingIndicator">Someone is typing...</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Members Modal -->
+<div class="modal fade" id="addMembersModal" tabindex="-1" aria-labelledby="addMembersModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMembersModalLabel">Add Members</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input type="text" id="memberSearchInput" class="form-control" placeholder="Search users...">
+          <button class="btn btn-outline-secondary" type="button" id="memberSearchButton">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+        <div id="memberSearchResults" class="user-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- File Upload Modal -->
+<div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fileUploadModalLabel">Upload File</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="fileUploadForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="fileInput" class="form-label">Select a file to upload (max 10MB)</label>
+            <input class="form-control" type="file" id="fileInput" name="file">
+          </div>
+          <div class="progress mb-3 d-none" id="uploadProgress">
+            <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+    const currentUserId = '<%= user._id %>';
+    const groupId = '<%= group._id %>';
+    const messagesContainer = document.getElementById('messagesContainer');
+    let typingTimeout = null;
+    
+    // Connect user and join group room
+    socket.emit('user_connected', currentUserId);
+    socket.emit('join_group', { userId: currentUserId, groupId });
+    
+    // Scroll to bottom of messages
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Send message
+    document.getElementById('messageForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const messageInput = document.getElementById('messageInput');
+      const content = messageInput.value.trim();
+      
+      if (content) {
+        // Emit message to server
+        socket.emit('send_message', {
+          sender: currentUserId,
+          group: groupId,
+          content
+        });
+        
+        // Clear input
+        messageInput.value = '';
+        
+        // Stop typing indicator
+        socket.emit('stop_typing', {
+          sender: currentUserId,
+          group: groupId
+        });
+      }
+    });
+    
+    // Handle typing
+    document.getElementById('messageInput').addEventListener('input', function() {
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+      
+      // Emit typing event
+      socket.emit('typing', {
+        sender: currentUserId,
+        group: groupId
+      });
+      
+      // Set timeout to stop typing
+      typingTimeout = setTimeout(() => {
+        socket.emit('stop_typing', {
+          sender: currentUserId,
+          group: groupId
+        });
+      }, 3000);
+    });
+    
+    // File upload
+    document.getElementById('fileUploadForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a file');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Show progress bar
+      const progressBar = document.querySelector('#uploadProgress .progress-bar');
+      document.getElementById('uploadProgress').classList.remove('d-none');
+      
+      // Upload file
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percentComplete + '%';
+          progressBar.textContent = percentComplete + '%';
+          progressBar.setAttribute('aria-valuenow', percentComplete);
+        }
+      });
+      
+      xhr.addEventListener('load', function() {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          
+          // Send message with attachment
+          socket.emit('send_message', {
+            sender: currentUserId,
+            group: groupId,
+            attachments: [response.file._id]
+          });
+          
+          // Reset form
+          fileInput.value = '';
+          document.getElementById('uploadProgress').classList.add('d-none');
+          
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('fileUploadModal'));
+          modal.hide();
+        } else {
+          alert('File upload failed');
+        }
+      });
+      
+      xhr.addEventListener('error', function() {
+        alert('File upload failed');
+      });
+      
+      xhr.open('POST', '/files/upload');
+      xhr.send(formData);
+    });
+    
+    // Member search
+    document.getElementById('memberSearchButton').addEventListener('click', function() {
+      const searchInput = document.getElementById('memberSearchInput');
+      searchUsers(searchInput.value.trim());
+    });
+    
+    document.getElementById('memberSearchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchUsers(this.value.trim());
+      }
+    });
+    
+    function searchUsers(term) {
+      if (!term) return;
+      
+      fetch(`/chat/search?term=${encodeURIComponent(term)}`)
+        .then(response => response.json())
+        .then(users => {
+          const resultsContainer = document.getElementById('memberSearchResults');
+          resultsContainer.innerHTML = '';
+          
+          if (users.length === 0) {
+            resultsContainer.innerHTML = '<p class="text-center text-muted">No users found</p>';
+            return;
+          }
+          
+          // Get current members
+          const currentMembers = Array.from(document.querySelectorAll('.members-list .d-flex'))
+            .map(el => el.dataset.userId);
+          
+          users.forEach(user => {
+            // Skip if already a member
+            if (currentMembers.includes(user._id)) return;
+            
+            const userItem = document.createElement('div');
+            userItem.className = 'd-flex align-items-center p-2 border-bottom user-item';
+            userItem.dataset.userId = user._id;
+            
+            userItem.innerHTML = `
+              <div class="position-relative">
+                <img src="/img/${user.avatar}" alt="${user.name}" class="rounded-circle me-2" width="40" height="40">
+                ${user.status === 'online' ? '<span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 10px; height: 10px;"></span>' : ''}
+              </div>
+              <div class="flex-grow-1 ms-2">
+                <h6 class="mb-0">${user.name}</h6>
+                <small class="text-muted">${user.email}</small>
+              </div>
+              <button class="btn btn-sm btn-primary add-member-btn">
+                <i class="fas fa-plus"></i>
+              </button>
+            `;
+            
+            userItem.querySelector('.add-member-btn').addEventListener('click', function() {
+              addMember(user._id);
+            });
+            
+            resultsContainer.appendChild(userItem);
+          });
+        })
+        .catch(error => {
+          console.error('Error searching users:', error);
+        });
+    }
+    
+    function addMember(userId) {
+      fetch(`/groups/${groupId}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ members: [userId] })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reload page to show new member
+          window.location.reload();
+        } else {
+          alert('Failed to add member');
+        }
+      })
+      .catch(error => {
+        console.error('Error adding member:', error);
+        alert('Failed to add member');
+      });
+    }
+    
+    // Socket events
+    socket.on('receive_group_message', function(data) {
+      if (data.group._id === groupId) {
+        const message = data.message;
+        const isCurrentUser = message.sender._id === currentUserId;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isCurrentUser ? 'message-out' : 'message-in'} mb-2`;
+        
+        let messageContent = '';
+        
+        if (!isCurrentUser) {
+          messageContent += `
+            <div class="sender-info d-flex align-items-center mb-1">
+              <img src="/img/${message.sender.avatar}" alt="${message.sender.name}" class="rounded-circle me-1" width="24" height="24">
+              <small class="text-muted">${message.sender.name}</small>
+            </div>
+          `;
+        }
+        
+        messageContent += `
+          <div class="${isCurrentUser ? 'ms-auto' : 'me-auto'} message-bubble p-2 rounded ${isCurrentUser ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 75%;">
+        `;
+        
+        if (message.attachments && message.attachments.length > 0) {
+          message.attachments.forEach(file => {
+            if (file.mimetype.startsWith('image/')) {
+              messageContent += `
+                <div class="attachment mb-2">
+                  <img src="${file.path}" alt="${file.originalname}" class="img-fluid rounded mb-1" style="max-height: 200px;">
+                </div>
+              `;
+            } else {
+              messageContent += `
+                <div class="attachment mb-2">
+                  <div class="file-attachment p-2 border rounded">
+                    <i class="fas fa-file me-2"></i>
+                    <a href="${file.path}" target="_blank" class="${isCurrentUser ? 'text-white' : 'text-primary'}">
+                      ${file.originalname}
+                    </a>
+                    <small class="${isCurrentUser ? 'text-white-50' : 'text-muted'} ms-2">
+                      ${(file.size / 1024).toFixed(1)} KB
+                    </small>
+                  </div>
+                </div>
+              `;
+            }
+          });
+        }
+        
+        if (message.content) {
+          messageContent += `<div class="message-text">${message.content}</div>`;
+        }
+        
+        messageContent += `
+            <div class="message-time text-end">
+              <small class="${isCurrentUser ? 'text-white-50' : 'text-muted'}">
+                ${new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </small>
+            </div>
+          </div>
+        `;
+        
+        messageDiv.innerHTML = messageContent;
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Mark as read
+        socket.emit('mark_read', { groupId, userId: currentUserId });
+      }
+    });
+    
+    socket.on('group_message_sent', function(data) {
+      if (data.group._id === groupId) {
+        const message = data.message;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message message-out mb-2';
+        
+        let messageContent = `
+          <div class="ms-auto message-bubble p-2 rounded bg-primary text-white" style="max-width: 75%;">
+        `;
+        
+        if (message.attachments && message.attachments.length > 0) {
+          message.attachments.forEach(file => {
+            if (file.mimetype.startsWith('image/')) {
+              messageContent += `
+                <div class="attachment mb-2">
+                  <img src="${file.path}" alt="${file.originalname}" class="img-fluid rounded mb-1" style="max-height: 200px;">
+                </div>
+              `;
+            } else {
+              messageContent += `
+                <div class="attachment mb-2">
+                  <div class="file-attachment p-2 border rounded">
+                    <i class="fas fa-file me-2"></i>
+                    <a href="${file.path}" target="_blank" class="text-white">
+                      ${file.originalname}
+                    </a>
+                    <small class="text-white-50 ms-2">
+                      ${(file.size / 1024).toFixed(1)} KB
+                    </small>
+                  </div>
+                </div>
+              `;
+            }
+          });
+        }
+        
+        if (message.content) {
+          messageContent += `<div class="message-text">${message.content}</div>`;
+        }
+        
+        messageContent += `
+            <div class="message-time text-end">
+              <small class="text-white-50">
+                ${new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </small>
+            </div>
+          </div>
+        `;
+        
+        messageDiv.innerHTML = messageContent;
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    });
+    
+    socket.on('user_typing_group', function(data) {
+      if (data.groupId === groupId && data.userId !== currentUserId) {
+        document.getElementById('typingIndicator').classList.remove('d-none');
+      }
+    });
+    
+    socket.on('user_stop_typing_group', function(data) {
+      if (data.groupId === groupId) {
+        document.getElementById('typingIndicator').classList.add('d-none');
+      }
+    });
+  });
+</script>

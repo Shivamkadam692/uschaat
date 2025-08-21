@@ -1,0 +1,13 @@
+<%- include('layout', { body: '<div>\nContent here\n</div>' }) %>
+<div class="row mt-5">
+  <div class="col-md-6 m-auto">
+    <div class="card card-body text-center">
+      <h1 class="mb-3">Dashboard</h1>
+      <h4>Welcome <%= user.name %></h4>
+      <p>You are now logged in to Chaat</p>
+      <a href="/chat" class="btn btn-primary btn-block mb-2">Go to Chat</a>
+  <a href="/groups" class="btn btn-outline-primary btn-block mb-2">View Groups</a>
+  <a href="/users/profile" class="btn btn-secondary btn-block">View Profile</a>
+    </div>
+  </div>
+</div>' }) %>
