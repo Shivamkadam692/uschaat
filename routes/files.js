@@ -23,23 +23,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
+// File filter (allow all file types)
 const fileFilter = (req, file, cb) => {
-  // Accept images, documents, and common file types
-  const allowedTypes = [
-    'image/jpeg', 'image/png', 'image/gif',
-    'application/pdf', 'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain', 'application/zip'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('File type not allowed'), false);
-  }
+  cb(null, true);
 };
 
 // Configure multer upload
